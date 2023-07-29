@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 use App\Models\Kas as KasModels;
+use App\Models\GambarKas;
 use Illuminate\Http\Request;
 use File;
 use Illuminate\Support\Facades\DB;
@@ -132,7 +133,7 @@ class Kas extends Controller
     public function input_kas(Request $request){
 
         $validator = Validator::make($request->all(), [
-            'gambar' =>'required|image|mimes:jpg,jpeg,svg,png,gif|max:2048',
+            'gambar.*' =>'required|image|mimes:jpg,jpeg,svg,png,gif|max:2048',
             'deskripsi' => 'required',
             'pemasukkan' => 'nullable|integer',
             'pengeluaran' => 'nullable|integer'
@@ -154,22 +155,46 @@ class Kas extends Controller
                 $pengeluaran = 0;
             }
 
-            $image = $request->file('gambar');
-            $namaImg = 'pic_' . uniqid();
-            $path = $image->getClientOriginalExtension();
-            $image->move('bukti_kas', $namaImg . '.' . $path);
-
             $kas = KasModels::create([
-                'gambar' => $namaImg . '.' . $path,
                 'tanggal' => $tanggal,
                 'deskripsi' => $request->deskripsi,
                 'pemasukkan' => $pemasukkan,
                 'pengeluaran' => $pengeluaran
              ]);
 
-            $data_pemasukkan = KasModels::select(DB::raw('sum(case when pemasukkan is not null then pemasukkan else null end) as jml_pemasukkan'))->where('pemasukkan', '!=', null)->get();
-            $data_pengeluaran = KasModels::select(DB::raw('sum(case when pengeluaran is not null then pengeluaran else null end) as jml_pengeluaran'))->where('pengeluaran', '!=', null)->get();
-            $data_saldo = ((int)$data_pemasukkan[0]->jml_pemasukkan) - ((int)$data_pengeluaran[0]->jml_pengeluaran);
+            $image = $request->file('gambar');
+
+            foreach($image as $file){
+                $namaImg = 'pic_' . uniqid();
+                $path = $file->getClientOriginalExtension();
+                $file->move('bukti_kas', $namaImg . '.' . $path);
+
+                $saveGambar = GambarKas::create([
+                'id_kas' => $kas->id,
+                'gambar' => $namaImg . '.' . $path
+                ]);
+            }
+
+            $data_pemasukkan = KasModels::select(DB::raw('sum(case when pemasukkan is not null then pemasukkan else 0 end) as jml_pemasukkan'))->where('pemasukkan', '!=', null)->get();
+            $data_pengeluaran = KasModels::select(DB::raw('sum(case when pengeluaran is not null then pengeluaran else 0 end) as jml_pengeluaran'))->where('pengeluaran', '!=', null)->get();
+
+            $nilai_pemasukkan = 0;
+            $nilai_pengeluaran = 0;
+
+            if(!$data_pemasukkan[0]->jml_pemasukkan){
+                $nilai_pemasukkan = 0;
+            } else {
+                $nilai_pemasukkan = (int)$data_pemasukkan[0]->jml_pemasukkan;
+            }
+
+
+            if(!$data_pengeluaran[0]->jml_pengeluaran){
+                $nilai_pengeluaran = 0;
+            } else {
+                $nilai_pengeluaran = (int)$data_pengeluaran[0]->jml_pengeluaran;
+            }
+
+            $data_saldo = $nilai_pemasukkan - $nilai_pengeluaran;
 
             $kas_saldo = KasModels::where('id_kas', $kas->id)->update([
             'saldo' => $data_saldo
@@ -199,7 +224,7 @@ class Kas extends Controller
             $id = $request->id;
 
             $validator = Validator::make($request->all(), [
-                'gambar' =>'nullable|image|mimes:jpg,jpeg,svg,png,gif|max:2048',
+                'gambar.*' =>'nullable|image|mimes:jpg,jpeg,svg,png,gif|max:2048',
                 'deskripsi' => 'required',
                 'pemasukkan' => 'nullable|integer',
                 'pengeluaran' => 'nullable|integer'
@@ -226,31 +251,27 @@ class Kas extends Controller
 
                     if($request->file('gambar')){
 
-                        if(File::exists(public_path('bukti_kas/' . $kas->gambar))){
-                            File::delete(public_path('bukti_kas/' . $kas->gambar));
+                        $image = $request->file('gambar');
+
+                        foreach($image as $file){
+                            $namaImg = 'pic_' . uniqid();
+                            $path = $file->getClientOriginalExtension();
+                            $file->move('bukti_kas', $namaImg . '.' . $path);
+
+                            $saveGambar = GambarKas::create([
+                            'id_kas' => $id,
+                            'gambar' => $namaImg . '.' . $path
+                            ]);
                         }
 
-                        $image = $request->file('gambar');
-                        $namaImg = 'pic_' . uniqid();
-                        $path = $image->getClientOriginalExtension();
-                        $image->move('bukti_kas', $namaImg . '.' . $path);
-            
-                        KasModels::where('id_kas', $id)->update([
-                            'gambar' => $namaImg . '.' . $path,
-                            'tanggal' => $tanggal,
-                            'deskripsi' => $request->deskripsi,
-                            'pemasukkan' => $pemasukkan,
-                            'pengeluaran' => $pengeluaran
-                        ]);
-
-                    } else {
-                        KasModels::where('id_kas', $id)->update([
-                            'tanggal' => $tanggal,
-                            'deskripsi' => $request->deskripsi,
-                            'pemasukkan' => $pemasukkan,
-                            'pengeluaran' => $pengeluaran
-                        ]);
                     }
+
+                    KasModels::where('id_kas', $id)->update([
+                        'tanggal' => $tanggal,
+                        'deskripsi' => $request->deskripsi,
+                        'pemasukkan' => $pemasukkan,
+                        'pengeluaran' => $pengeluaran
+                    ]);
 
                     $tambah_saldo = 0;
 
@@ -302,6 +323,7 @@ class Kas extends Controller
         try {
             $kas = KasModels::where('id_kas', $id)->firstOrFail();
             $kas_array = KasModels::where('id_kas', '>', $id)->get();
+            $gambar_kas = GambarKas::where('id_kas', $id)->get();
 
             $tambah_saldo = 0;
 
@@ -326,8 +348,16 @@ class Kas extends Controller
 
             if($kas){
                 KasModels::where('id_kas', $id)->delete();
-                if(File::exists(public_path('bukti_kas/' . $kas->gambar))){
-                    File::delete(public_path('bukti_kas/' . $kas->gambar));
+
+                if(count($gambar_kas) != 0){
+                    
+                    foreach($gambar_kas as $file){
+                        if(File::exists(public_path('bukti_kas/' . $file->gambar))){
+                            File::delete(public_path('bukti_kas/' . $file->gambar));
+                        }
+                    }
+
+                    GambarKas::where('id_kas', $id)->delete();
                 }
     
                 return response()->json([
@@ -344,6 +374,48 @@ class Kas extends Controller
             return response()->json($e);
         }
 
+    }
+
+    public function show_gambar($id){
+
+        try {            
+            
+            $data = GambarKas::where('id_kas', $id)->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data Gambar',
+                'data' => $data
+            ]);
+
+        } catch (exception $e) {
+            return response()->json($e);
+        }
+
+    }
+
+    public function hapus_gambar($id){
+
+        try {            
+            
+            $data = GambarKas::where('id', $id)->firstOrFail();
+
+            if($data){
+                if(File::exists(public_path('bukti_kas/' . $data->gambar))){
+                    File::delete(public_path('bukti_kas/' . $data->gambar));
+                }
+            }
+
+            $data->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data Gambar terhapus'
+            ]);
+
+        } catch (exception $e) {
+            return response()->json($e);
+        }
     }
 
 }

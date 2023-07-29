@@ -14,10 +14,10 @@ class CreateKasTable extends Migration
     public function up()
     {
         Schema::create('kas', function (Blueprint $table) {
-            $table->unsignedBigInteger('id_kas')->bigIncrements()->nullable(false);
+            $table->increments('id_kas')->bigInteger()->autoIncrement();
             $table->date('tanggal');
             $table->string('deskripsi', 100);
-            $table->char('gambar', 250);
+            $table->char('gambar', 250)->nullable(true);
             $table->bigInteger('pemasukkan')->nullable(true);
             $table->bigInteger('pengeluaran')->nullable(true);
             $table->bigInteger('saldo')->nullable(true);
