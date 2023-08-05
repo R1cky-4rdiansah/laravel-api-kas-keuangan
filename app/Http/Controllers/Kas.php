@@ -16,6 +16,10 @@ class Kas extends Controller
         
         $data_saldo = KasModels::select('saldo')->orderBy('created_at', 'desc')->first();
 
+        if(!$data_saldo){
+            $data_saldo = (object) ['saldo' => 0];
+        }
+
         $data_pemasukkan = KasModels::select(DB::raw('sum(case when pemasukkan != 0 then pemasukkan else 0 end) as jml_pemasukkan'))->where('pemasukkan', '!=', 0)->get();
 
         $data_pengeluaran = KasModels::select(DB::raw('sum(case when pengeluaran != 0 then pengeluaran else 0 end) as jml_pengeluaran'))->where('pengeluaran', '!=', 0)->get();

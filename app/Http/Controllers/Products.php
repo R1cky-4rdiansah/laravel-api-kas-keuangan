@@ -32,9 +32,7 @@ class Products extends Controller
         ], 200);
     }
 
-    public function simpan(Request $request){
-
-        
+    public function simpan(Request $request){        
 
         $validator = Validator::make($request->all(), [
             'gambar' =>'required|image|mimes:jpg,jpeg,svg,png,gif|max:2048',
