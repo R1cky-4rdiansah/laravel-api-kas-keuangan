@@ -149,7 +149,7 @@ class Kas extends Controller
 
             $pemasukkan = $request->pemasukkan;
             $pengeluaran = $request->pengeluaran;
-            $tanggal = Carbon::now('Asia/Jakarta')->format('Y-m-d');
+            $tanggal = $request->tanggal;
 
             if($pemasukkan == null){
                 $pemasukkan = 0;
@@ -243,7 +243,6 @@ class Kas extends Controller
                 if($kas){
                     $pemasukkan = (int)$request->pemasukkan;
                     $pengeluaran = (int)$request->pengeluaran;
-                    $tanggal = Carbon::now('Asia/Jakarta')->format('Y-m-d');
         
                     if($pemasukkan == null){
                         $pemasukkan = 0;
@@ -271,7 +270,6 @@ class Kas extends Controller
                     }
 
                     KasModels::where('id_kas', $id)->update([
-                        'tanggal' => $tanggal,
                         'deskripsi' => $request->deskripsi,
                         'pemasukkan' => $pemasukkan,
                         'pengeluaran' => $pengeluaran

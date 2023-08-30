@@ -34,6 +34,7 @@ Route::group(['middleware' => ['api', 'jwt.verify']], function(){
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
     Route::post('/profile', [AuthController::class, 'profile'])->name('profile');
 
+    //Kas
     Route::get('/kas', [Kas::class, 'kas'])->name('kas');
     Route::get('/gambar/{id}', [Kas::class, 'show_gambar'])->name('show_gambar');
     Route::post('/report_pemasukkan', [Kas::class, 'report_pemasukkan'])->name('report_pemasukkan');
@@ -45,6 +46,7 @@ Route::group(['middleware' => ['api', 'jwt.verify']], function(){
     Route::post('/hapus_kas/{id}', [Kas::class, 'hapus_kas'])->name('hapus_kas');
     Route::post('/hapus_gambar/{id}', [Kas::class, 'hapus_gambar'])->name('hapus_gambar');
 
+    //Users
     Route::get('/users', [AuthController::class, 'users'])->name('users');
     Route::get('/getUser/{id_user}', [AuthController::class, 'getUser'])->name('getUser');
     Route::post('/update_users/{id}', [AuthController::class, 'update_users'])->name('update_users');
