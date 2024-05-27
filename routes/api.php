@@ -26,14 +26,6 @@ Route::post('/register', [AuthController::class, 'register'])->name('register');
 
 
 Route::group(['middleware' => ['api', 'jwt.verify']], function(){
-    Route::get('/produk', [Products::class, 'produk'])->name('produk');
-    Route::post('/detail/{id}', [Products::class, 'detail'])->name('detail');
-    Route::post('/simpan', [Products::class, 'simpan'])->name('simpan');
-    Route::post('/update/{id}', [Products::class, 'update'])->name('update');
-    Route::post('/hapus/{id}', [Products::class, 'hapus'])->name('hapus');
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-    Route::post('/profile', [AuthController::class, 'profile'])->name('profile');
-
     //Kas
     Route::get('/kas', [Kas::class, 'kas'])->name('kas');
     Route::get('/gambar/{id}', [Kas::class, 'show_gambar'])->name('show_gambar');
