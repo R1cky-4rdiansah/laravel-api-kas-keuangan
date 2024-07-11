@@ -3,6 +3,8 @@
 /public/storage
 /storage/*.key
 /vendor
+public/bukti_kas/*
+!public/bukti_kas/.gitkeep
 .env
 .env.backup
 .phpunit.result.cache
